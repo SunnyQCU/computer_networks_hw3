@@ -80,17 +80,27 @@ class NetworkInterface():
 
 """List of my own definitions"""
 
-def initialize_costs(init_costs):
-    curr_node, neighbors = init_costs.split('.') #A and B:1,C:1,....
+def init_routing_table(init_costs):
+    """
+    Takes the init_costs and initializes the routing table
 
+    Parameters:
+        init_costs : string
+            The current node and initial costs to each neighboring node
+
+    Returns:
+        The current node and the routing table
+    """
     routing_table = {}
-    routing_table[curr_node] = 0 # Current node is 0 distance
+    
+    curr_node, neighbors = init_costs.split('.') #A and B:1,C:1,....
+    routing_table[curr_node] = (0, curr_node) # Current node is 0 distance
 
     # Get nodes and costs of all the neighrbos
     if neighbors: #if we are given neighbors
         for entry in neighbors.split(','):
             neighbor, cost = entry.split(':')
-            routing_table[neighbor] = int(cost) 
+            routing_table[neighbor] = (int(cost), neighbor) #(cost, hop)
 
     return curr_node, routing_table
 
@@ -108,8 +118,9 @@ if __name__ == '__main__':
     """Below is an example of how to use the network interface and log. Replace it with your distance vector routing protocol"""
     # The routing table is used for forwarding (deciding where to send) and logging
     # The distance vector simply contain the costs to each vector
-    # technically one data structure can contain everything.
-    curr_node, routing_table = initialize_costs(init_costs)
+    # routing_table contains both of this, since distance vector is a subset of routing table
+
+    curr_node, routing_table = init_routing_table(init_costs)
     print("current node: " + str(curr_node))
     print("Routing table: ")
     print(routing_table)
