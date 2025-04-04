@@ -137,12 +137,14 @@ def node_thread(node):
             The Node object representing this thread's node.
     """
     # send message to node with its immediate neighbors and their hop costs
+
+
     welcome_message = f"{node.node_id}. "
     for n, c in node.neighbors.items():
         welcome_message += f"{n}:{c},"
     welcome_message = welcome_message[:-1]  # remove the last comma
     node.connection.sendall(welcome_message.encode()) 
-    
+
     while True:
         try:
             # catch issue of connection being reset by peer, which can happen

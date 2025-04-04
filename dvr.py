@@ -9,6 +9,10 @@ import sys
 import socket
 import time
 
+#my imports
+import os
+import json
+
 class NetworkInterface():
     """
     DO NOT EDIT.
@@ -80,9 +84,9 @@ class NetworkInterface():
 
 """List of my own definitions"""
 
-def init_routing_table(init_costs):
+def init_tables(init_costs):
     """
-    Takes the init_costs and initializes the routing table
+    Takes the init_costs and initializes the routing table and neighbors table
 
     Parameters:
         init_costs : string
@@ -92,24 +96,113 @@ def init_routing_table(init_costs):
         The current node and the routing table
     """
     routing_table = {}
+    neighbors_table = {}
     
     curr_node, neighbors = init_costs.split('.') #A and B:1,C:1,....
+    curr_node = curr_node.strip()  # remove trailing whitespaces
     routing_table[curr_node] = (0, curr_node) # Current node is 0 distance
 
     # Get nodes and costs of all the neighrbos
     if neighbors: #if we are given neighbors
         for entry in neighbors.split(','):
             neighbor, cost = entry.split(':')
-            routing_table[neighbor] = (int(cost), neighbor) #(cost, hop)
 
-    return curr_node, routing_table
+            neighbor = neighbor.strip() # remove trailing whitespaces
+            cost = cost.strip()
+
+            routing_table[neighbor] = (int(cost), neighbor) # (cost, hop), fo routing_table
+            neighbors_table[neighbor] = int(cost) # for neighbors
+
+    return curr_node, routing_table, neighbors_table
+
+# Part 3: Sending
+def send_dv(net_interface, curr_node, routing_table):
+    """
+    Sends the distance vector to every neighbor
+
+    Parameters:
+        net_interface:
+            The net interface object that provides the send() function
+        curr_node:
+            The sending node
+        routing_table:
+            The table to send
+    """
+    # create the dv. Omit the hops, only care about destination and cost
+    dv_to_send = {dest: cost for dest, (cost, _) in routing_table.items()}
+    print("dv_to_send: " + str(dv_to_send))
+    message = {
+        "sender": curr_node,
+        "dv": dv_to_send
+    }
+    packet = json.dumps(message).encode()
+    print("packet: " + str(packet))
+    net_interface.send(packet) # send() sends to every neighbor
+
+# Part 4: Receiving
+
+def receive_dv(net_interface):
+    """
+    Receives one message.
+
+    Parameters:
+        net_interface:
+            The net interface object that provides the recv() function
+    """
+
+    raw_message_data = net_interface.recv(4096)
+
+    try:
+        message = json.loads(raw_message_data.decode())
+        print("successful json decode")
+        print("json info:")
+        print(str(message))
+        return [message]
+    except:
+        return []
+
+
+def update_routing_table(routing_table, sender, dv, neighbors_table):
+    updated = False
+
+    # Gets cost to sender if in neighbors. Otherwise infinite cost (unaccessable)
+    cost_to_sender = neighbors_table.get(sender, float('inf'))
+
+    for dest, sender_cost_to_dest in dv.items():
+        if dest == sender:
+            continue # Don't go through sender to sender
+
+        new_cost = cost_to_sender + sender_cost_to_dest
+
+        # routing_table[dest][0] gets the current RT's cost to destination
+        if dest not in routing_table or new_cost < routing_table[dest][0]:
+            routing_table[dest] = (new_cost, sender) # (cost, hop)
+            updated = True
+    
+    return updated 
+
+def log_routing_table(log_file, routing_table):
+    entries = []
+
+    # Sorting for consistent order
+    for dest in sorted(routing_table.keys()):
+        cost, next_hop = routing_table[dest]
+        entries.append(f"{dest}:{cost}:{next_hop}")
+    
+    log_line = " ". join(entries) # make one long line
+
+    log_file.write(log_line + "\n")
+    log_file.flush() # Flush as assignment instructed
+
+
+""" End of my functions """
 
 if __name__ == '__main__':
     network_ip = sys.argv[1] # the IP address of the network
     network_port = int(sys.argv[2]) # the port the network is listening on
  
     net_interface = NetworkInterface(network_port, network_ip) # initialize the network interface
-
+    
     # get the initial costs to your neighbors to help initialize your vector and table. Format is:
     # <node_id>. <neighbor_1>:<cost_1>,...,<neighbor_n>:<cost_n>
     init_costs = net_interface.initial_costs() 
@@ -120,19 +213,44 @@ if __name__ == '__main__':
     # The distance vector simply contain the costs to each vector
     # routing_table contains both of this, since distance vector is a subset of routing table
 
-    curr_node, routing_table = init_routing_table(init_costs)
-    print("current node: " + str(curr_node))
-    print("Routing table: ")
-    print(routing_table)
+    # Parts 1, 2 parse initial message and initialze routing table and neighbors table
+    curr_node, routing_table, neighbors_table = init_tables(init_costs)
 
+    # print("current node: " + str(curr_node))
+    # print("Routing table: ")
+    # print(routing_table)
+    # print("Neighbors table:")
+    # print(neighbors_table)
 
+    os.makedirs("logs", exist_ok=True)
+    log_file = open(f"logs/log_{curr_node}.txt", "w")
 
+    # Main loop, parts 3-7 (sending, receiving, updating, logging, and looping)
+    while True: #Pt. 7: looping
+        print("loop")
+        send_dv(net_interface, curr_node, routing_table) # Pt.3: send to all neighbors
 
+        messages = receive_dv(net_interface) # Pt.4: Receive a neighbor's update
 
+        updated = False
 
+        # realistically, there will only be 1 or 0 messages in messages
+        # the looping is for safety. If there's no message, it won't loop
+        for msg in messages:
+            print("message received!")
+            sender = msg["sender"]
+            dv = msg["dv"]
+            if update_routing_table(routing_table, sender, dv, neighbors_table): # Pt. 5: Updating
+                updated = True
 
+        if updated:
+            log_routing_table(log_file, routing_table) # Pt. 6: logging
+        print("reached end of loop")
+        
+        time.sleep(1)
+    
     """End of my own code"""
-
+    """
     # Create a log file
     log_file = open("log.txt", "w")
 
@@ -156,3 +274,4 @@ if __name__ == '__main__':
 
     # Close the log file
     log_file.close()
+    """
