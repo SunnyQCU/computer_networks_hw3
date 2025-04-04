@@ -12,6 +12,7 @@ import time
 #my imports
 import os
 import json
+import shutil
 
 class NetworkInterface():
     """
@@ -130,13 +131,13 @@ def send_dv(net_interface, curr_node, routing_table):
     """
     # create the dv. Omit the hops, only care about destination and cost
     dv_to_send = {dest: cost for dest, (cost, _) in routing_table.items()}
-    print("dv_to_send: " + str(dv_to_send))
+    #print("dv_to_send: " + str(dv_to_send))
     message = {
         "sender": curr_node,
         "dv": dv_to_send
     }
     packet = json.dumps(message).encode()
-    print("packet: " + str(packet))
+    #print("packet: " + str(packet))
     net_interface.send(packet) # send() sends to every neighbor
 
 # Part 4: Receiving
@@ -154,19 +155,37 @@ def receive_dv(net_interface):
 
     try:
         message = json.loads(raw_message_data.decode())
-        print("successful json decode")
-        print("json info:")
-        print(str(message))
+        #print("successful json decode")
+        #print("json info:")
+        #print(str(message))
         return [message]
     except:
         return []
 
 
-def update_routing_table(routing_table, sender, dv, neighbors_table):
+def update_routing_table(routing_table, neighbors_table, sender, dv):
+    """
+    Updates this node's routing table based on received table from
+    a neighbor
+
+    Parameters:
+        routing_table:
+            The current node's routing_table
+        sender:
+            The sending node's name
+        dv: 
+            The sending node's distance vector
+        neighbors_table:
+            The current node's neighbors_table
+    
+    Returns:
+        The updated routing_table
+    """
     updated = False
 
     # Gets cost to sender if in neighbors. Otherwise infinite cost (unaccessable)
-    cost_to_sender = neighbors_table.get(sender, float('inf'))
+    cost_to_sender = neighbors_table[sender]
+    # cost_to_sender = neighbors_table.get(sender, float('inf'))
 
     for dest, sender_cost_to_dest in dv.items():
         if dest == sender:
@@ -181,11 +200,13 @@ def update_routing_table(routing_table, sender, dv, neighbors_table):
     
     return updated 
 
-def log_routing_table(log_file, routing_table):
+def log_routing_table(log_file, routing_table, curr_node):
     entries = []
 
     # Sorting for consistent order
     for dest in sorted(routing_table.keys()):
+        if dest == curr_node:
+            continue #don't log self
         cost, next_hop = routing_table[dest]
         entries.append(f"{dest}:{cost}:{next_hop}")
     
@@ -216,18 +237,12 @@ if __name__ == '__main__':
     # Parts 1, 2 parse initial message and initialze routing table and neighbors table
     curr_node, routing_table, neighbors_table = init_tables(init_costs)
 
-    # print("current node: " + str(curr_node))
-    # print("Routing table: ")
-    # print(routing_table)
-    # print("Neighbors table:")
-    # print(neighbors_table)
-
-    os.makedirs("logs", exist_ok=True)
-    log_file = open(f"logs/log_{curr_node}.txt", "w")
+    # log_file = open(f"logs/log_{curr_node}.txt", "w") # for local testing only
+    log_file = open(f"log_{curr_node}.txt", "w") # for autograder
+    log_routing_table(log_file, routing_table, curr_node) # Log initial state
 
     # Main loop, parts 3-7 (sending, receiving, updating, logging, and looping)
-    while True: #Pt. 7: looping
-        print("loop")
+    while True: #Pt. 7: looping forever (how actual nodes operate)
         send_dv(net_interface, curr_node, routing_table) # Pt.3: send to all neighbors
 
         messages = receive_dv(net_interface) # Pt.4: Receive a neighbor's update
@@ -237,17 +252,22 @@ if __name__ == '__main__':
         # realistically, there will only be 1 or 0 messages in messages
         # the looping is for safety. If there's no message, it won't loop
         for msg in messages:
-            print("message received!")
             sender = msg["sender"]
             dv = msg["dv"]
-            if update_routing_table(routing_table, sender, dv, neighbors_table): # Pt. 5: Updating
+            if update_routing_table(routing_table, neighbors_table, sender, dv): # Pt. 5: Updating
                 updated = True
 
         if updated:
-            log_routing_table(log_file, routing_table) # Pt. 6: logging
-        print("reached end of loop")
-        
-        time.sleep(1)
+            log_routing_table(log_file, routing_table, curr_node) # Pt. 6: logging
+
+    # Wait for 5 seconds before closing the interface
+    time.sleep(5)
+
+    # Close the interface with the network
+    net_interface.close()
+    
+    # Close the log file
+    log_file.close()
     
     """End of my own code"""
     """

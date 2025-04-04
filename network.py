@@ -12,6 +12,10 @@ import time
 
 LOG_LEVEL  = "INFO"
 
+""" MY IMPORTS"""
+import os
+import shutil
+
 class Node:
     """
     Node in a network. Each node has a unique ID, a port number, a connection to the network,
@@ -176,6 +180,16 @@ def node_thread(node):
         time.sleep(0.1)
 
 if __name__ == '__main__':
+
+    """ MY CODE: """
+    if os.path.exists("logs"):
+        shutil.rmtree("logs")
+
+    # Recreate the directory
+    os.makedirs("logs", exist_ok=True)
+
+    """ END OF MY CODE"""
+
     NETWORK_PORT = sys.argv[1]
     try:
         NETWORK_PORT = int(NETWORK_PORT)

@@ -11,4 +11,5 @@ To run the multiple nodes:
 - python3 dvr.py 127.0.0.1 50000
 
 Current issues:
-None, keep testing with larger graphs
+The updating seems to be random and sporadic, so its a matter of chance what info
+reaches what node. In other words, alot of messages are lost.
