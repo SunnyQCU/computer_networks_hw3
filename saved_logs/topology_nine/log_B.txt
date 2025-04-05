@@ -1,0 +1,6 @@
+A:2:A C:3:C E:1:E
+A:2:A C:2:E E:1:E I:8:E
+A:2:A C:2:E D:4:A E:1:E F:4:C H:4:C I:8:E
+A:2:A C:2:E D:4:A E:1:E F:3:E H:3:E I:8:E
+A:2:A C:2:E D:4:A E:1:E F:3:E G:6:A H:3:E I:5:C
+A:2:A C:2:E D:4:A E:1:E F:3:E G:5:E H:3:E I:4:E

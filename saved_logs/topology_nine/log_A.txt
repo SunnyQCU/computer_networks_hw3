@@ -1,0 +1,6 @@
+B:2:B C:5:C D:2:D
+B:2:B C:5:C D:2:D E:6:C F:6:C H:6:C
+B:2:B C:5:C D:2:D E:3:B F:6:C G:4:D H:6:C
+B:2:B C:4:B D:2:D E:3:B F:6:C G:4:D H:6:C I:10:B
+B:2:B C:4:B D:2:D E:3:B F:5:B G:4:D H:5:B I:7:C
+B:2:B C:4:B D:2:D E:3:B F:5:B G:4:D H:5:B I:6:B

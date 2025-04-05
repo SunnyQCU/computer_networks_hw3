@@ -11,7 +11,7 @@ To run the multiple nodes:
 - python3 dvr.py <ip_addr> <network_port>
   For example
 - python3 dvr.py 127.0.0.1 50000
-  Run this cmomand on N different terminals, where N is the number of nodes present
+  Run this command on N different terminals, where N is the number of nodes present
   in the network.
 
 Run the network.py before running the multiple nodes.
@@ -43,10 +43,8 @@ I also made 5 different functions, which do the following:
 
 More information about these functions can be found in dvr.py itself.
 
-
 Code already works
 Remaining things to do:
 
 Finish TESTING.md
-Finish DESIGN.md
 Clean up main code

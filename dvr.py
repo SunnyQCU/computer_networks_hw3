@@ -96,14 +96,14 @@ def init_tables(init_costs):
     routing_table = {}
     neighbors_table = {}
     
-    curr_node, neighbors = init_costs.split('.') #A and B:1,C:1,....
-    curr_node = curr_node.strip()  # remove trailing whitespaces
-    routing_table[curr_node] = (0, curr_node) # Current node is 0 distance
+    curr_node, neighbors = init_costs.split('.')
+    curr_node = curr_node.strip()
+    routing_table[curr_node] = (0, curr_node)
 
     for entry in neighbors.split(','):
         neighbor, cost = entry.split(':')
 
-        neighbor = neighbor.strip() # remove trailing whitespaces
+        neighbor = neighbor.strip()
         cost = cost.strip()
 
         routing_table[neighbor] = (int(cost), neighbor)
@@ -111,7 +111,6 @@ def init_tables(init_costs):
 
     return curr_node, routing_table, neighbors_table
 
-# Part 3: Sending
 def send_dv(net_interface, curr_node, routing_table):
     """
     Sends the distance vector to every neighbor
@@ -124,7 +123,6 @@ def send_dv(net_interface, curr_node, routing_table):
         routing_table:
             The table to send
     """
-    # Create the dv contianing only destination and cost
     dv_to_send = {dest: cost for dest, (cost, _) in routing_table.items()}
 
     message = {
@@ -133,13 +131,10 @@ def send_dv(net_interface, curr_node, routing_table):
     }
     packet = json.dumps(message).encode()
 
-    # Prepare the header that contains message size
     packet_size = len(packet) 
     packet = packet_size.to_bytes(4, byteorder='big') + packet
 
     net_interface.send(packet)
-
-# Part 4: Receiving
 
 def receive_dv(net_interface):
     """
@@ -156,17 +151,13 @@ def receive_dv(net_interface):
     messages = []
     buffer = data
 
-    # At the minimum, there should be a buffer size header
     while len(buffer) >= 4:
-        # Read the 4-byte message size header
         header = buffer[:4]
         packet_size = int.from_bytes(header, byteorder='big')
 
-        # Check if the complete message is available in the buffer
         if len(buffer) < 4 + packet_size:
             break
 
-        # Extract the actual json file
         payload = buffer[4:4 + packet_size]
         try:
             message = json.loads(payload.decode())
@@ -174,7 +165,6 @@ def receive_dv(net_interface):
         except Exception as e:
             pass
 
-        # Remove the processed message from the buffer
         buffer = buffer[4 + packet_size:]
 
     return messages
@@ -199,12 +189,11 @@ def update_routing_table(routing_table, neighbors_table, sender, dv):
     """
     updated = False
 
-    # Gets cost to sender (which is a neighbor)
     cost_to_sender = neighbors_table[sender]
 
     for dest, sender_cost_to_dest in dv.items():
         if dest == sender:
-            continue # Don't go through sender to sender
+            continue
 
         new_cost = cost_to_sender + sender_cost_to_dest
 
@@ -229,9 +218,8 @@ def log_routing_table(log_file, routing_table, curr_node):
     """
     entries = []
 
-    # Sorting for consistent order
     for dest in sorted(routing_table.keys()):
-        if dest == curr_node: # don't log the current node
+        if dest == curr_node:
             continue 
         cost, next_hop = routing_table[dest]
         entries.append(f"{dest}:{cost}:{next_hop}")
@@ -252,86 +240,26 @@ if __name__ == '__main__':
     init_costs = net_interface.initial_costs() 
 
     """Below is an example of how to use the network interface and log. Replace it with your distance vector routing protocol"""
-    # The routing table is used for forwarding (deciding where to send) and logging
-    # The distance vector simply contain the costs to each vector
-    # routing_table contains both of this, since distance vector is a subset of routing table
 
-    # Parts 1, 2 parse initial message and initialze routing table and neighbors table
     curr_node, routing_table, neighbors_table = init_tables(init_costs)
 
-    # log_file = open(f"logs/log_{curr_node}.txt", "w") # for local testing only
-    log_file = open(f"log_{curr_node}.txt", "w") # for autograder
-    log_routing_table(log_file, routing_table, curr_node) # Log initial state
+    log_file = open(f"log_{curr_node}.txt", "w")
+    log_routing_table(log_file, routing_table, curr_node)
 
-    # Main loop, parts 3-7 (sending, receiving, updating, logging, and looping)
-    while True: #Pt. 7: looping forever (how actual nodes operate)
-        send_dv(net_interface, curr_node, routing_table) # Pt.3: send to all neighbors
+    while True:
+        send_dv(net_interface, curr_node, routing_table)
 
-        messages = receive_dv(net_interface) # Pt.4: Receive a neighbor's update
+        messages = receive_dv(net_interface)
 
         updated = False
 
-        # realistically, there will only be 1 or 0 messages in messages
-        # the looping is for safety. If there's no message, it won't loop
         for msg in messages:
             sender = msg["sender"]
             dv = msg["dv"]
-            if update_routing_table(routing_table, neighbors_table, sender, dv): # Pt. 5: Updating
+            if update_routing_table(routing_table, neighbors_table, sender, dv):
                 updated = True
 
         if updated:
-            log_routing_table(log_file, routing_table, curr_node) # Pt. 6: logging
+            log_routing_table(log_file, routing_table, curr_node)
         
         time.sleep(1)
-
-    
-    """End of my own code"""
-
-    """
-    # Create a log file
-    log_file = open("log.txt", "w")
-
-    # Example of sending a message to the network, 
-    # which is guaranteed to be broadcast to your neighbors
-    net_interface.send(b"Hello neighbor")
-        
-    # Example of receiving a message from the network,
-    # which is guaranteed to be from a neighbor
-    msg = net_interface.recv(1024) # receive the message from the network. Note: May return content from multiple nodes. 
-
-    # Write the message to the log file. Use flush to ensure the message is written to the file immediately
-    log_file.write(msg.decode())
-    log_file.flush() # IMPORTANT
- 
-    # Wait for 5 seconds before closing the interface
-    time.sleep(5)
-
-    # Close the interface with the network
-    net_interface.close()
-
-    # Close the log file
-    log_file.close()
-
-
-
-    def receive_dv_old(net_interface):
-
-    Receives one message.
-
-    Parameters:
-        net_interface:
-            The net interface object that provides the recv() function
-
-
-    raw_message_data = net_interface.recv(4096)
-
-    # New code start
-
-    # New code end
-    try:
-        message = json.loads(raw_message_data.decode())
-        return [message]
-    except:
-        return []
-    """
-

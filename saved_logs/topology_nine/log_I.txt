@@ -1,0 +1,5 @@
+E:7:E H:1:H
+B:8:E C:8:E E:7:E H:1:H
+B:8:E C:2:H E:7:E F:4:H H:1:H
+A:7:H B:4:H C:2:H D:5:H E:3:H F:3:H G:5:H H:1:H
+A:6:H B:4:H C:2:H D:5:H E:3:H F:3:H G:5:H H:1:H

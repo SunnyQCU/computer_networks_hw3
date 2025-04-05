@@ -1,0 +1,5 @@
+A:2:A C:3:C G:2:G
+A:2:A C:3:C F:4:G G:2:G
+A:2:A B:4:A C:3:C E:4:C F:4:G G:2:G H:4:C
+A:2:A B:4:A C:3:C E:4:C F:4:G G:2:G H:4:C I:11:C
+A:2:A B:4:A C:3:C E:4:C F:4:G G:2:G H:4:C I:5:C

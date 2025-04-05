@@ -1,0 +1,4 @@
+B:1:B C:1:C I:7:I
+B:1:B C:1:C H:8:I I:7:I
+A:3:B B:1:B C:1:C D:4:C F:2:C H:2:C I:7:I
+A:3:B B:1:B C:1:C D:4:C F:2:C G:4:C H:2:C I:3:C

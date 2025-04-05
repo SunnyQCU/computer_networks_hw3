@@ -1,0 +1,5 @@
+C:1:C G:2:G H:3:H
+C:1:C D:4:G G:2:G H:3:H
+A:6:C B:4:C C:1:C D:4:G E:2:C G:2:G H:2:C I:4:H
+A:6:C B:3:C C:1:C D:4:G E:2:C G:2:G H:2:C I:4:H
+A:5:C B:3:C C:1:C D:4:G E:2:C G:2:G H:2:C I:3:C
